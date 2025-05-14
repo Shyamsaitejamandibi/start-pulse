@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useStatus } from "@/context/StatusContext";
 import { Button } from "@/components/ui/button";
 import { formatTimeAgo } from "@/utils/dateUtils";
 import {
@@ -17,10 +16,30 @@ import {
   getIncidentImpactColor,
   getIncidentStatusColor,
 } from "@/utils/statusUtils";
+import { Incident } from "@/lib/generated/prisma";
+import { resolveIncident, deleteIncident } from "@/app/actions";
+import { useRouter } from "next/navigation";
+import { Service } from "@/lib/generated/prisma";
 
-export function IncidentsOverview() {
-  const { incidents, deleteIncident, resolveIncident } = useStatus();
+interface IncidentWithRelations extends Incident {
+  affectedServices: { id: string }[];
+  updates: {
+    id: string;
+    message: string;
+    status: string;
+    createdAt: Date;
+    createdBy: string;
+  }[];
+}
 
+export function IncidentsOverview({
+  incidents,
+  services,
+}: {
+  incidents: IncidentWithRelations[];
+  services: Service[];
+}) {
+  const router = useRouter();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
@@ -36,6 +55,20 @@ export function IncidentsOverview() {
   const resolvedIncidents = incidents.filter(
     (inc) => inc.status === "resolved"
   );
+
+  const handleResolveIncident = async (id: string) => {
+    const result = await resolveIncident(id);
+    if (!result.error) {
+      router.refresh();
+    }
+  };
+
+  const handleDeleteIncident = async (id: string) => {
+    const result = await deleteIncident(id);
+    if (!result.error) {
+      router.refresh();
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -80,6 +113,12 @@ export function IncidentsOverview() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Affected Services
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Reported
                     </th>
                     <th
@@ -116,8 +155,21 @@ export function IncidentsOverview() {
                             incident.impact.slice(1)}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap gap-1">
+                          {incident.affectedServices.map((service) => (
+                            <span
+                              key={service.id}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                            >
+                              {services.find((s) => s.id === service.id)
+                                ?.name || service.id}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatTimeAgo(incident.createdAt)}
+                        {formatTimeAgo(incident.createdAt.toISOString())}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <Button
@@ -143,7 +195,7 @@ export function IncidentsOverview() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => resolveIncident(incident.id)}
+                          onClick={() => handleResolveIncident(incident.id)}
                         >
                           Resolve
                         </Button>
@@ -151,7 +203,7 @@ export function IncidentsOverview() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-800"
-                          onClick={() => deleteIncident(incident.id)}
+                          onClick={() => handleDeleteIncident(incident.id)}
                         >
                           Delete
                         </Button>
@@ -195,6 +247,12 @@ export function IncidentsOverview() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Affected Services
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Reported
                     </th>
                     <th
@@ -227,12 +285,25 @@ export function IncidentsOverview() {
                             incident.impact.slice(1)}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap gap-1">
+                          {incident.affectedServices.map((service) => (
+                            <span
+                              key={service.id}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                            >
+                              {services.find((s) => s.id === service.id)
+                                ?.name || service.id}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatTimeAgo(incident.createdAt)}
+                        {formatTimeAgo(incident.createdAt.toISOString())}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {incident.resolvedAt
-                          ? formatTimeAgo(incident.resolvedAt)
+                          ? formatTimeAgo(incident.resolvedAt.toISOString())
                           : "Unknown"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
@@ -250,7 +321,7 @@ export function IncidentsOverview() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-800"
-                          onClick={() => deleteIncident(incident.id)}
+                          onClick={() => handleDeleteIncident(incident.id)}
                         >
                           Delete
                         </Button>
@@ -274,7 +345,10 @@ export function IncidentsOverview() {
           <DialogHeader>
             <DialogTitle>Report New Incident</DialogTitle>
           </DialogHeader>
-          <IncidentForm onCancel={() => setShowAddForm(false)} />
+          <IncidentForm
+            onCancel={() => setShowAddForm(false)}
+            services={services}
+          />
         </DialogContent>
       </Dialog>
 
@@ -290,11 +364,15 @@ export function IncidentsOverview() {
           {incidentToEdit && (
             <IncidentForm
               editMode
-              initialData={incidentToEdit}
+              initialData={{
+                ...incidentToEdit,
+                affectedServices: incidentToEdit.affectedServices || [],
+              }}
               onCancel={() => {
                 setShowEditForm(false);
                 setSelectedIncident(null);
               }}
+              services={services}
             />
           )}
         </DialogContent>
@@ -311,7 +389,7 @@ export function IncidentsOverview() {
           </DialogHeader>
           {selectedIncident && (
             <IncidentUpdateForm
-              incidentId={selectedIncident}
+              incident={incidents.find((inc) => inc.id === selectedIncident)!}
               onCancel={() => {
                 setShowUpdateForm(false);
                 setSelectedIncident(null);

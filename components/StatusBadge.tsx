@@ -1,9 +1,9 @@
 import React from "react";
 import { getStatusColor, getStatusText } from "@/utils/statusUtils";
-import { StatusType } from "@/types";
+import { ServiceStatus } from "@/lib/generated/prisma";
 
 interface StatusBadgeProps {
-  status: StatusType;
+  status: ServiceStatus;
   size?: "sm" | "md" | "lg";
   showText?: boolean;
   className?: string;

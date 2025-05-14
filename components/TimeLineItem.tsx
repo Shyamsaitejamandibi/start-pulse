@@ -1,12 +1,16 @@
 import React from "react";
 import { formatTimeAgo } from "@/utils/dateUtils";
-import { getIncidentStatusColor } from "@/utils/statusUtils";
+import {
+  getIncidentStatusColor,
+  getMaintenanceStatusColor,
+} from "@/utils/statusUtils";
+import { IncidentStatus, MaintenanceStatus } from "@/lib/generated/prisma";
 
 interface TimelineItemProps {
   title: string;
   message: string;
   timestamp: string;
-  status?: "investigating" | "identified" | "monitoring" | "resolved";
+  status?: IncidentStatus | MaintenanceStatus;
 }
 
 const TimelineItem: React.FC<TimelineItemProps> = ({
@@ -15,6 +19,32 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
   timestamp,
   status,
 }) => {
+  const getStatusColor = (status: IncidentStatus | MaintenanceStatus) => {
+    if (Object.values(IncidentStatus).includes(status as IncidentStatus)) {
+      return getIncidentStatusColor(status as IncidentStatus);
+    }
+    return getMaintenanceStatusColor(status as MaintenanceStatus);
+  };
+
+  const getStatusText = (status: IncidentStatus | MaintenanceStatus) => {
+    if (Object.values(IncidentStatus).includes(status as IncidentStatus)) {
+      return (
+        (status as IncidentStatus).charAt(0).toUpperCase() +
+        (status as IncidentStatus).slice(1)
+      );
+    }
+    switch (status as MaintenanceStatus) {
+      case MaintenanceStatus.scheduled:
+        return "Scheduled";
+      case MaintenanceStatus.in_progress:
+        return "In Progress";
+      case MaintenanceStatus.completed:
+        return "Completed";
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="pb-6 relative">
       <div className="absolute top-0 bottom-0 left-2.5 w-px bg-gray-200"></div>
@@ -32,11 +62,11 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
           {status && (
             <div className="mb-2">
               <span
-                className={`inline-block px-2 py-1 text-xs rounded-full ${getIncidentStatusColor(
+                className={`inline-block px-2 py-1 text-xs rounded-full ${getStatusColor(
                   status
                 )}`}
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {getStatusText(status)}
               </span>
             </div>
           )}

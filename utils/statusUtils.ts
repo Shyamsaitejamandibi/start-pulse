@@ -1,84 +1,85 @@
-import { StatusType } from "@/types";
+import {
+  ServiceStatus,
+  IncidentStatus,
+  IncidentImpact,
+  MaintenanceStatus,
+} from "@/lib/generated/prisma";
 
-export const getStatusColor = (status: StatusType): string => {
+export const getStatusColor = (status: ServiceStatus): string => {
   switch (status) {
-    case "operational":
+    case ServiceStatus.operational:
       return "bg-status-operational";
-    case "degraded":
+    case ServiceStatus.degraded:
       return "bg-status-degraded";
-    case "partialOutage":
+    case ServiceStatus.partialOutage:
       return "bg-status-partialOutage";
-    case "majorOutage":
+    case ServiceStatus.majorOutage:
       return "bg-status-majorOutage";
-    case "maintenance":
+    case ServiceStatus.maintenance:
       return "bg-status-maintenance";
     default:
       return "bg-gray-400";
   }
 };
 
-export const getStatusText = (status: StatusType): string => {
+export const getStatusText = (status: ServiceStatus): string => {
   switch (status) {
-    case "operational":
+    case ServiceStatus.operational:
       return "Operational";
-    case "degraded":
+    case ServiceStatus.degraded:
       return "Degraded Performance";
-    case "partialOutage":
+    case ServiceStatus.partialOutage:
       return "Partial Outage";
-    case "majorOutage":
+    case ServiceStatus.majorOutage:
       return "Major Outage";
-    case "maintenance":
+    case ServiceStatus.maintenance:
       return "Maintenance";
     default:
       return "Unknown";
   }
 };
 
-export const getStatusTextColor = (status: StatusType): string => {
+export const getStatusTextColor = (status: ServiceStatus): string => {
   switch (status) {
-    case "operational":
+    case ServiceStatus.operational:
       return "text-status-operational";
-    case "degraded":
+    case ServiceStatus.degraded:
       return "text-status-degraded";
-    case "partialOutage":
+    case ServiceStatus.partialOutage:
       return "text-status-partialOutage";
-    case "majorOutage":
+    case ServiceStatus.majorOutage:
       return "text-status-majorOutage";
-    case "maintenance":
+    case ServiceStatus.maintenance:
       return "text-status-maintenance";
     default:
       return "text-gray-400";
   }
 };
 
-export const getIncidentImpactColor = (
-  impact: "none" | "minor" | "major" | "critical"
-): string => {
+export const getIncidentImpactColor = (impact: IncidentImpact): string => {
   switch (impact) {
-    case "none":
+    case IncidentImpact.none:
       return "bg-green-100 text-green-800";
-    case "minor":
+    case IncidentImpact.minor:
       return "bg-yellow-100 text-yellow-800";
-    case "major":
+    case IncidentImpact.major:
       return "bg-orange-100 text-orange-800";
-    case "critical":
+    case IncidentImpact.critical:
       return "bg-red-100 text-red-800";
     default:
       return "bg-gray-100 text-gray-800";
   }
 };
 
-export const getIncidentStatusColor = (
-  status: "investigating" | "identified" | "monitoring" | "resolved"
-): string => {
+export const getIncidentStatusColor = (status: IncidentStatus): string => {
   switch (status) {
-    case "investigating":
+    case IncidentStatus.investigating:
       return "bg-red-100 text-red-800";
-    case "identified":
+    case IncidentStatus.identified:
       return "bg-orange-100 text-orange-800";
-    case "monitoring":
+    case IncidentStatus.monitoring:
       return "bg-blue-100 text-blue-800";
-    case "resolved":
+    case IncidentStatus.resolved:
       return "bg-green-100 text-green-800";
     default:
       return "bg-gray-100 text-gray-800";
@@ -86,33 +87,33 @@ export const getIncidentStatusColor = (
 };
 
 export const getMaintenanceStatusColor = (
-  status: "scheduled" | "in_progress" | "completed"
+  status: MaintenanceStatus
 ): string => {
   switch (status) {
-    case "scheduled":
+    case MaintenanceStatus.scheduled:
       return "bg-blue-100 text-blue-800";
-    case "in_progress":
+    case MaintenanceStatus.in_progress:
       return "bg-yellow-100 text-yellow-800";
-    case "completed":
+    case MaintenanceStatus.completed:
       return "bg-green-100 text-green-800";
     default:
       return "bg-gray-100 text-gray-800";
   }
 };
 
-export const getOverallStatusText = (
-  status: "operational" | "degraded" | "partialOutage" | "majorOutage"
-): string => {
+export const getOverallStatusText = (status: ServiceStatus): string => {
   switch (status) {
-    case "operational":
+    case ServiceStatus.operational:
       return "All Systems Operational";
-    case "degraded":
+    case ServiceStatus.degraded:
       return "Some Systems Experiencing Degraded Performance";
-    case "partialOutage":
+    case ServiceStatus.partialOutage:
       return "Some Systems Experiencing Outages";
-    case "majorOutage":
-      return "Major System Outages";
+    case ServiceStatus.majorOutage:
+      return "Major System Outage";
+    case ServiceStatus.maintenance:
+      return "Systems Under Maintenance";
     default:
-      return "System Status Unknown";
+      return "Unknown Status";
   }
 };

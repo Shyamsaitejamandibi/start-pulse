@@ -1,8 +1,15 @@
 import { Suspense } from "react";
-import { MaintenanceOverview } from "./components/maintenance-overview";
+import MaintenanceOverview from "./components/maintenance-overview";
 import { MaintenanceSkeleton } from "./components/maintenance-skeleton";
+import { getMaintenances } from "@/app/actions/maintenance";
+import { getServices } from "@/app/actions";
 
 export default async function MaintenancePage() {
+  const [{ maintenances }, { services }] = await Promise.all([
+    getMaintenances(),
+    getServices(),
+  ]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,7 +20,10 @@ export default async function MaintenancePage() {
       </div>
 
       <Suspense fallback={<MaintenanceSkeleton />}>
-        <MaintenanceOverview />
+        <MaintenanceOverview
+          maintenances={maintenances || []}
+          services={services || []}
+        />
       </Suspense>
     </div>
   );

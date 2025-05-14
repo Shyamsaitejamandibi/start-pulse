@@ -1,32 +1,58 @@
 import React from "react";
-import { Incident } from "@/types";
-import { formatTimeAgo, formatDate } from "@/utils/dateUtils";
+import { Incident } from "@prisma/client";
+import { IncidentStatus, IncidentImpact } from "@/lib/generated/prisma";
+import { formatTimeAgo } from "@/utils/dateUtils";
 import {
   getIncidentImpactColor,
   getIncidentStatusColor,
 } from "@/utils/statusUtils";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import TimelineItem from "./TimeLineItem";
+import TimelineItem from "@/components/TimeLineItem";
 
 interface IncidentCardProps {
-  incident: Incident;
+  incident: Omit<Incident, "status" | "impact"> & {
+    status: IncidentStatus;
+    impact: IncidentImpact;
+    updates: {
+      id: string;
+      message: string;
+      status: IncidentStatus;
+      createdAt: Date;
+      createdBy: string;
+    }[];
+  };
 }
 
 const IncidentCard: React.FC<IncidentCardProps> = ({ incident }) => {
-  const { title, status, impact, createdAt, updatedAt, resolvedAt, updates } =
-    incident;
+  const { title, status, impact, createdAt, resolvedAt, updates } = incident;
+
+  const getImpactText = (impact: IncidentImpact): string => {
+    switch (impact) {
+      case IncidentImpact.none:
+        return "No Impact";
+      case IncidentImpact.minor:
+        return "Minor Impact";
+      case IncidentImpact.major:
+        return "Major Impact";
+      case IncidentImpact.critical:
+        return "Critical Impact";
+      default:
+        return impact;
+    }
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-4">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
       <div className="flex flex-col space-y-2">
         <div className="flex justify-between items-start">
           <h3 className="font-medium text-gray-900">{title}</h3>
-          <div className="flex items-center space-x-2">
+          <div className="flex gap-2">
+            <span
+              className={`text-xs px-2 py-1 rounded-full ${getIncidentImpactColor(
+                impact
+              )}`}
+            >
+              {getImpactText(impact)}
+            </span>
             <span
               className={`text-xs px-2 py-1 rounded-full ${getIncidentStatusColor(
                 status
@@ -34,45 +60,30 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ incident }) => {
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
-            <span
-              className={`text-xs px-2 py-1 rounded-full ${getIncidentImpactColor(
-                impact
-              )}`}
-            >
-              {impact.charAt(0).toUpperCase() + impact.slice(1)} Impact
-            </span>
           </div>
         </div>
 
         <div className="text-sm text-gray-500">
-          {status === "resolved"
-            ? `Resolved ${formatTimeAgo(resolvedAt || updatedAt)}`
-            : `Reported ${formatTimeAgo(
-                createdAt
-              )}, Last update ${formatTimeAgo(updatedAt)}`}
+          <span>Started {formatTimeAgo(createdAt.toISOString())}</span>
+          {resolvedAt && (
+            <span className="ml-2">
+              • Resolved {formatTimeAgo(resolvedAt.toISOString())}
+            </span>
+          )}
         </div>
       </div>
 
-      <Accordion type="single" collapsible className="mt-4">
-        <AccordionItem value="updates">
-          <AccordionTrigger className="text-sm">
-            View {updates.length} update{updates.length !== 1 ? "s" : ""}
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="pt-4">
-              {updates.map((update) => (
-                <TimelineItem
-                  key={update.id}
-                  title={`Update ${formatDate(update.createdAt)}`}
-                  message={update.message}
-                  timestamp={update.createdAt}
-                  status={update.status}
-                />
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <div className="mt-4">
+        {updates.map((update) => (
+          <TimelineItem
+            key={update.id}
+            title={`Update by ${update.createdBy}`}
+            message={update.message}
+            timestamp={update.createdAt.toISOString()}
+            status={update.status}
+          />
+        ))}
+      </div>
     </div>
   );
 };

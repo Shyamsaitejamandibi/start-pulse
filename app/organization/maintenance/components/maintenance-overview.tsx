@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useStatus } from "@/context/StatusContext";
 import { Button } from "@/components/ui/button";
 import { formatTimeAgo, formatDateRange } from "@/utils/dateUtils";
 import {
@@ -11,24 +10,67 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import MaintenanceForm from "@/components/MaintenanceForm";
-import MaintenanceUpdateForm from "@/components/MaintenaceUpdateForm";
+import MaintenanceUpdateForm from "@/components/MaintenanceUpdateForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMaintenanceStatusColor } from "@/utils/statusUtils";
+import {
+  Maintenance,
+  Service,
+  MaintenanceStatus,
+} from "@/lib/generated/prisma";
+import { deleteMaintenance } from "@/app/actions/maintenance";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-export function MaintenanceOverview() {
-  const { maintenances, deleteMaintenance } = useStatus();
+type MaintenanceWithRelations = Maintenance & {
+  affectedServices: Service[];
+  updates: {
+    id: string;
+    message: string;
+    status: MaintenanceStatus;
+    createdAt: Date;
+    createdBy: string;
+  }[];
+};
 
+interface MaintenanceOverviewProps {
+  maintenances: MaintenanceWithRelations[];
+  services: Service[];
+}
+
+export default function MaintenanceOverview({
+  maintenances,
+  services,
+}: MaintenanceOverviewProps) {
+  const router = useRouter();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [selectedMaintenance, setSelectedMaintenance] = useState<string | null>(
-    null
-  );
+  const [selectedMaintenance, setSelectedMaintenance] =
+    useState<MaintenanceWithRelations | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get selected maintenance data
-  const maintenanceToEdit = selectedMaintenance
-    ? maintenances.find((m) => m.id === selectedMaintenance)
-    : null;
+  const handleDeleteMaintenance = async (maintenanceId: string) => {
+    if (!confirm("Are you sure you want to delete this maintenance?")) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await deleteMaintenance(maintenanceId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Maintenance deleted successfully");
+      router.refresh();
+    } catch (error) {
+      console.error("Error deleting maintenance:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Filter maintenances
   const upcomingMaintenances = maintenances.filter(
@@ -52,7 +94,7 @@ export function MaintenanceOverview() {
         <h2 className="text-2xl font-bold text-gray-900">
           Maintenance Windows
         </h2>
-        <Button onClick={() => setShowAddForm(true)}>
+        <Button onClick={() => setShowAddForm(true)} disabled={isSubmitting}>
           Schedule Maintenance
         </Button>
       </div>
@@ -104,7 +146,7 @@ export function MaintenanceOverview() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-block px-2 py-1 text-xs rounded-full ${getMaintenanceStatusColor(
-                            maintenance.status
+                            maintenance.status as MaintenanceStatus
                           )}`}
                         >
                           {maintenance.status === "scheduled"
@@ -114,8 +156,8 @@ export function MaintenanceOverview() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDateRange(
-                          maintenance.scheduledStart,
-                          maintenance.scheduledEnd
+                          maintenance.startTime.toISOString(),
+                          maintenance.endTime.toISOString()
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
@@ -123,7 +165,7 @@ export function MaintenanceOverview() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setSelectedMaintenance(maintenance.id);
+                            setSelectedMaintenance(maintenance);
                             setShowUpdateForm(true);
                           }}
                         >
@@ -133,7 +175,7 @@ export function MaintenanceOverview() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setSelectedMaintenance(maintenance.id);
+                            setSelectedMaintenance(maintenance);
                             setShowEditForm(true);
                           }}
                         >
@@ -143,7 +185,9 @@ export function MaintenanceOverview() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-800"
-                          onClick={() => deleteMaintenance(maintenance.id)}
+                          onClick={() =>
+                            handleDeleteMaintenance(maintenance.id)
+                          }
                         >
                           Delete
                         </Button>
@@ -205,19 +249,21 @@ export function MaintenanceOverview() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDateRange(
-                          maintenance.scheduledStart,
-                          maintenance.scheduledEnd
+                          maintenance.startTime.toISOString(),
+                          maintenance.endTime.toISOString()
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatTimeAgo(maintenance.createdAt)}
+                        {formatTimeAgo(maintenance.createdAt.toISOString())}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-800"
-                          onClick={() => deleteMaintenance(maintenance.id)}
+                          onClick={() =>
+                            handleDeleteMaintenance(maintenance.id)
+                          }
                         >
                           Delete
                         </Button>
@@ -243,23 +289,27 @@ export function MaintenanceOverview() {
           <DialogHeader>
             <DialogTitle>Schedule Maintenance</DialogTitle>
           </DialogHeader>
-          <MaintenanceForm onCancel={() => setShowAddForm(false)} />
+          <MaintenanceForm
+            services={services}
+            onCancel={() => setShowAddForm(false)}
+          />
         </DialogContent>
       </Dialog>
 
       {/* Edit Maintenance Dialog */}
       <Dialog
-        open={showEditForm && !!maintenanceToEdit}
+        open={showEditForm && !!selectedMaintenance}
         onOpenChange={setShowEditForm}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Maintenance</DialogTitle>
           </DialogHeader>
-          {maintenanceToEdit && (
+          {selectedMaintenance && (
             <MaintenanceForm
               editMode
-              initialData={maintenanceToEdit}
+              initialData={selectedMaintenance}
+              services={services}
               onCancel={() => {
                 setShowEditForm(false);
                 setSelectedMaintenance(null);
@@ -280,7 +330,7 @@ export function MaintenanceOverview() {
           </DialogHeader>
           {selectedMaintenance && (
             <MaintenanceUpdateForm
-              maintenanceId={selectedMaintenance}
+              maintenance={selectedMaintenance}
               onCancel={() => {
                 setShowUpdateForm(false);
                 setSelectedMaintenance(null);

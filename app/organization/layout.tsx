@@ -1,7 +1,6 @@
 import { OrganizationList } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { PropsWithChildren } from "react";
-import { StatusProvider } from "@/context/StatusContext";
 import AdminHeader from "./components/admin-header";
 
 export const RequireActiveOrganization = async (props: PropsWithChildren) => {
@@ -12,9 +11,7 @@ export const RequireActiveOrganization = async (props: PropsWithChildren) => {
       <div className="min-h-screen bg-gray-50">
         <AdminHeader />
         <main className="flex-1 overflow-x-hidden">
-          <StatusProvider>
-            <div className="max-w-7xl mx-auto p-6">{props.children}</div>
-          </StatusProvider>
+          <div className="max-w-7xl mx-auto p-6">{props.children}</div>
         </main>
       </div>
     );

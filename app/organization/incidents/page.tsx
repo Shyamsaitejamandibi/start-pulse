@@ -1,8 +1,18 @@
 import { Suspense } from "react";
 import { IncidentsOverview } from "./components/incidents-overview";
 import { IncidentsSkeleton } from "./components/incidents-skeleton";
+import { getIncidents, getServices } from "@/app/actions";
 
-export default function IncidentsPage() {
+export default async function IncidentsPage() {
+  const [{ incidents, error }, { services }] = await Promise.all([
+    getIncidents(),
+    getServices(),
+  ]);
+
+  if (error) {
+    throw new Error("Failed to fetch incidents");
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,7 +23,10 @@ export default function IncidentsPage() {
       </div>
 
       <Suspense fallback={<IncidentsSkeleton />}>
-        <IncidentsOverview />
+        <IncidentsOverview
+          incidents={incidents || []}
+          services={services || []}
+        />
       </Suspense>
     </div>
   );

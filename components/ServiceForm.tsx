@@ -1,54 +1,84 @@
 import React from "react";
-import { Service, StatusType } from "@/types";
-import { useStatus } from "@/context/StatusContext";
+import { Service } from "@prisma/client";
+import { ServiceStatus } from "@/lib/generated/prisma";
 import { Button } from "@/components/ui/button";
-import { getStatusText } from "@/utils/statusUtils";
+import { addService, updateServiceStatus } from "@/app/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface ServiceFormProps {
   editMode?: boolean;
   initialData?: Service;
   onCancel: () => void;
+  serviceGroups: { id: string; name: string }[];
 }
+
+const statusOptions = [
+  { value: ServiceStatus.operational, label: "Operational" },
+  { value: ServiceStatus.degraded, label: "Degraded" },
+  { value: ServiceStatus.partialOutage, label: "Partial Outage" },
+  { value: ServiceStatus.majorOutage, label: "Major Outage" },
+  { value: ServiceStatus.maintenance, label: "Under Maintenance" },
+] as const;
 
 const ServiceForm: React.FC<ServiceFormProps> = ({
   editMode = false,
   initialData,
   onCancel,
+  serviceGroups,
 }) => {
-  const { addService, updateService, serviceGroups } = useStatus();
-
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [name, setName] = React.useState(initialData?.name || "");
   const [description, setDescription] = React.useState(
     initialData?.description || ""
   );
-  const [status, setStatus] = React.useState<StatusType>(
-    initialData?.status || "operational"
+  const [status, setStatus] = React.useState<ServiceStatus>(
+    (initialData?.status as ServiceStatus) || ServiceStatus.operational
   );
-  const [groupId, setGroupId] = React.useState<string | undefined>(
-    initialData?.groupId
+  const [groupId, setGroupId] = React.useState<string | null>(
+    (initialData?.groupId as string) || null
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    if (editMode && initialData) {
-      updateService({
-        ...initialData,
-        name,
-        description,
-        status,
-        groupId,
-      });
-    } else {
-      addService({
-        name,
-        description,
-        status,
-        groupId,
-      });
+    try {
+      if (editMode && initialData) {
+        await updateServiceStatus(initialData.id, status);
+        toast.success("Service status updated successfully");
+      } else {
+        await addService({
+          name,
+          description,
+          status,
+          groupId: groupId || undefined,
+        });
+        toast.success("Service added successfully");
+      }
+
+      router.refresh();
+      onCancel();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save service. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    onCancel();
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as ServiceStatus;
+    setStatus(value);
+  };
+
+  const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setGroupId(e.target.value === "" ? null : e.target.value);
   };
 
   return (
@@ -64,6 +94,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           onChange={(e) => setName(e.target.value)}
           className="w-full p-2 border rounded-md"
           placeholder="Service name"
+          disabled={editMode || isSubmitting}
         />
       </div>
 
@@ -77,6 +108,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           className="w-full p-2 border rounded-md"
           placeholder="Describe this service"
           rows={3}
+          disabled={editMode || isSubmitting}
         />
       </div>
 
@@ -86,16 +118,15 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </label>
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as StatusType)}
+          onChange={handleStatusChange}
           className="w-full p-2 border rounded-md"
+          disabled={isSubmitting}
         >
-          <option value="operational">{getStatusText("operational")}</option>
-          <option value="degraded">{getStatusText("degraded")}</option>
-          <option value="partialOutage">
-            {getStatusText("partialOutage")}
-          </option>
-          <option value="majorOutage">{getStatusText("majorOutage")}</option>
-          <option value="maintenance">{getStatusText("maintenance")}</option>
+          {statusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -105,10 +136,9 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </label>
         <select
           value={groupId || ""}
-          onChange={(e) =>
-            setGroupId(e.target.value === "" ? undefined : e.target.value)
-          }
+          onChange={handleGroupChange}
           className="w-full p-2 border rounded-md"
+          disabled={editMode || isSubmitting}
         >
           <option value="">None</option>
           {serviceGroups.map((group) => (
@@ -120,11 +150,25 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       </div>
 
       <div className="flex justify-end space-x-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
-        <Button type="submit">
-          {editMode ? "Update Service" : "Add Service"}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {editMode ? "Updating..." : "Adding..."}
+            </>
+          ) : editMode ? (
+            "Update Service"
+          ) : (
+            "Add Service"
+          )}
         </Button>
       </div>
     </form>

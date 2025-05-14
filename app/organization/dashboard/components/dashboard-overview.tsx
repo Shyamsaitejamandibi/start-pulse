@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useStatus } from "@/context/StatusContext";
 import StatusBadge from "@/components/StatusBadge";
 import {
   Card,
@@ -12,9 +11,17 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Service, Incident, Maintenance } from "@/lib/generated/prisma";
 
-export function DashboardOverview() {
-  const { services, incidents, maintenances, getServiceStatus } = useStatus();
+export function DashboardOverview({
+  services,
+  incidents,
+  maintenances,
+}: {
+  services: Service[];
+  incidents: Incident[];
+  maintenances: Maintenance[];
+}) {
   const activeIncidents = incidents.filter((inc) => inc.status !== "resolved");
   const activeMaintenances = maintenances.filter(
     (m) => m.status !== "completed"
@@ -29,6 +36,17 @@ export function DashboardOverview() {
     maintenance: services.filter((s) => s.status === "maintenance").length,
   };
 
+  // Function to determine overall system status
+  const getOverallStatus = () => {
+    if (serviceStatusCount.majorOutage > 0) return "majorOutage";
+    if (serviceStatusCount.partialOutage > 0) return "partialOutage";
+    if (serviceStatusCount.degraded > 0 || serviceStatusCount.maintenance > 0)
+      return "degraded";
+    return "operational";
+  };
+
+  const overallStatus = getOverallStatus();
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -39,9 +57,9 @@ export function DashboardOverview() {
           <CardContent>
             <div className="flex items-center space-x-2">
               <StatusBadge
-                status={getServiceStatus()}
+                status={overallStatus}
                 size="lg"
-                animate={getServiceStatus() !== "operational"}
+                animate={overallStatus !== "operational"}
               />
             </div>
           </CardContent>

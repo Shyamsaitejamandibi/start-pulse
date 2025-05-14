@@ -1,7 +1,10 @@
 import React from "react";
-import { ServiceGroup } from "@/types";
-import { useStatus } from "@/context/StatusContext";
+import { ServiceGroup } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { addServiceGroup, updateServiceGroup } from "@/app/actions";
 
 interface ServiceGroupFormProps {
   editMode?: boolean;
@@ -14,32 +17,50 @@ const ServiceGroupForm: React.FC<ServiceGroupFormProps> = ({
   initialData,
   onCancel,
 }) => {
-  const { addServiceGroup, updateServiceGroup } = useStatus();
-
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [name, setName] = React.useState(initialData?.name || "");
+  const [description, setDescription] = React.useState(
+    initialData?.description || ""
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    if (editMode && initialData) {
-      updateServiceGroup({
-        ...initialData,
-        name,
-      });
-    } else {
-      addServiceGroup({
-        name,
-      });
+    try {
+      if (editMode && initialData) {
+        await updateServiceGroup(initialData.id, {
+          name,
+          description,
+        });
+        toast.success("Service group updated successfully");
+      } else {
+        await addServiceGroup({
+          name,
+          description,
+        });
+        toast.success("Service group added successfully");
+      }
+
+      router.refresh();
+      onCancel();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save service group. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onCancel();
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Group Name
+          Name
         </label>
         <input
           required
@@ -47,15 +68,46 @@ const ServiceGroupForm: React.FC<ServiceGroupFormProps> = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full p-2 border rounded-md"
-          placeholder="Group name"
+          placeholder="Service group name"
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Description
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full p-2 border rounded-md"
+          placeholder="Describe this service group"
+          rows={3}
+          disabled={isSubmitting}
         />
       </div>
 
       <div className="flex justify-end space-x-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
-        <Button type="submit">{editMode ? "Update Group" : "Add Group"}</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {editMode ? "Updating..." : "Adding..."}
+            </>
+          ) : editMode ? (
+            "Update Service Group"
+          ) : (
+            "Add Service Group"
+          )}
+        </Button>
       </div>
     </form>
   );
