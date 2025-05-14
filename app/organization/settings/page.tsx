@@ -10,12 +10,9 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { OrganizationProfile, useOrganization } from "@clerk/nextjs";
-import Link from "next/link";
+import { OrganizationProfile } from "@clerk/nextjs";
 
 const SettingsPage = () => {
-  const { organization } = useOrganization();
-
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
@@ -26,46 +23,6 @@ const SettingsPage = () => {
       </header>
 
       <div className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Public Status Page</CardTitle>
-            <CardDescription>
-              View and manage your public-facing status page
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-              <div>
-                <h3 className="font-medium">View Public Page</h3>
-                <p className="text-sm text-muted-foreground">
-                  See what your customers will see
-                </p>
-              </div>
-              <Button asChild variant="default" className="gap-2">
-                <Link href={`${organization?.slug}`} target="_blank">
-                  <span>Open Public Page</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-external-link"
-                  >
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" x2="21" y1="14" y2="3" />
-                  </svg>
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Status Colors</CardTitle>
@@ -216,7 +173,7 @@ const SettingsPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <OrganizationProfile />
+            <OrganizationProfile routing="hash" />
           </CardContent>
         </Card>
       </div>

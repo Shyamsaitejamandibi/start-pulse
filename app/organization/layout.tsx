@@ -1,19 +1,20 @@
 import { OrganizationList } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { PropsWithChildren } from "react";
-import AdminSidebar from "./components/sidebar";
+import { StatusProvider } from "@/context/StatusContext";
+import AdminHeader from "./components/admin-header";
 
 export const RequireActiveOrganization = async (props: PropsWithChildren) => {
   const { orgId } = await auth();
 
   if (orgId) {
     return (
-      <div className="min-h-screen w-full flex">
-        <div className="flex-shrink-0 border-r">
-          <AdminSidebar />
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <AdminHeader />
         <main className="flex-1 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto p-6">{props.children}</div>
+          <StatusProvider>
+            <div className="max-w-7xl mx-auto p-6">{props.children}</div>
+          </StatusProvider>
         </main>
       </div>
     );
