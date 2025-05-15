@@ -2,11 +2,16 @@ import { Suspense } from "react";
 import { IncidentsOverview } from "./components/incidents-overview";
 import { IncidentsSkeleton } from "./components/incidents-skeleton";
 import { getIncidents, getServices } from "@/app/actions";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function IncidentsPage() {
+  const { orgId } = await auth();
+  if (!orgId) {
+    throw new Error("Organization ID not found");
+  }
   const [{ incidents, error }, { services }] = await Promise.all([
-    getIncidents(),
-    getServices(),
+    getIncidents(orgId),
+    getServices(orgId),
   ]);
 
   if (error) {
