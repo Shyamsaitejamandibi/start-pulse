@@ -1,9 +1,15 @@
 import { getServices, getServiceGroups } from "@/app/actions";
 import { ServicesOverview } from "./components/services-overview";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function ServicesPage() {
-  const { services = [] } = await getServices();
-  const { serviceGroups = [] } = await getServiceGroups();
+  const { orgId } = await auth();
+  if (!orgId) {
+    throw new Error("No organization selected");
+  }
+
+  const { services } = await getServices(orgId);
+  const serviceGroups = await getServiceGroups();
 
   return (
     <div className="space-y-6">
@@ -14,7 +20,10 @@ export default async function ServicesPage() {
         </p>
       </div>
 
-      <ServicesOverview services={services} serviceGroups={serviceGroups} />
+      <ServicesOverview
+        services={services || []}
+        serviceGroups={serviceGroups || []}
+      />
     </div>
   );
 }

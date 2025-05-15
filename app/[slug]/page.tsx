@@ -10,13 +10,18 @@ import {
   IncidentStatus,
   MaintenanceStatus,
 } from "@/lib/generated/prisma";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function Page() {
-  const [{ services }, { incidents }, { maintenances }, { serviceGroups }] =
+  const { orgId } = await auth();
+  if (!orgId) {
+    throw new Error("No organization selected");
+  }
+  const [{ services }, { incidents }, { maintenances }, serviceGroups] =
     await Promise.all([
-      getServices(),
-      getIncidents(),
-      getMaintenances(),
+      getServices(orgId),
+      getIncidents(orgId),
+      getMaintenances(orgId),
       getServiceGroups(),
     ]);
 

@@ -4,13 +4,18 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, Activity, Shield, Bell } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
+import { getUser } from "./actions";
 
 export default async function Home() {
   const { userId, orgId } = await auth();
 
-  // If user has an organization, redirect to dashboard
-  if (orgId) {
-    redirect("/organization/dashboard");
+  const user = await getUser();
+  if (!user) {
+    return <div>User not found</div>;
+  }
+
+  if (!orgId) {
+    redirect("/create-organization");
   }
 
   return (

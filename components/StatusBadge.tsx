@@ -1,40 +1,66 @@
-import React from "react";
-import { getStatusColor, getStatusText } from "@/utils/statusUtils";
 import { ServiceStatus } from "@/lib/generated/prisma";
+import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
   status: ServiceStatus;
   size?: "sm" | "md" | "lg";
-  showText?: boolean;
-  className?: string;
   animate?: boolean;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({
+export default function StatusBadge({
   status,
   size = "md",
-  showText = true,
-  className = "",
   animate = false,
-}) => {
-  const sizeClasses = {
-    sm: "h-2 w-2",
-    md: "h-3 w-3",
-    lg: "h-4 w-4",
+}: StatusBadgeProps) {
+  const getStatusColor = (status: ServiceStatus): string => {
+    switch (status) {
+      case ServiceStatus.operational:
+        return "bg-green-500";
+      case ServiceStatus.degraded:
+        return "bg-yellow-500";
+      case ServiceStatus.partialOutage:
+        return "bg-orange-500";
+      case ServiceStatus.majorOutage:
+        return "bg-red-500";
+      case ServiceStatus.maintenance:
+        return "bg-sky-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getSizeClass = (size: string): string => {
+    switch (size) {
+      case "sm":
+        return "w-2 h-2";
+      case "lg":
+        return "w-4 h-4";
+      case "md":
+      default:
+        return "w-3 h-3";
+    }
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <span
-        className={`${getStatusColor(status)} ${
-          sizeClasses[size]
-        } rounded-full ${animate ? "animate-pulse-slow" : ""}`}
+    <div className="relative flex items-center justify-center">
+      <div
+        className={cn(
+          "rounded-full",
+          getSizeClass(size),
+          getStatusColor(status),
+          { "animate-pulse": animate }
+        )}
       />
-      {showText && (
-        <span className="text-sm font-medium">{getStatusText(status)}</span>
+      {animate && (
+        <div
+          className={cn(
+            "absolute rounded-full opacity-75",
+            getSizeClass(size),
+            getStatusColor(status),
+            "animate-ping"
+          )}
+        />
       )}
     </div>
   );
-};
-
-export default StatusBadge;
+}

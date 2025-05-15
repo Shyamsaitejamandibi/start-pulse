@@ -3,11 +3,16 @@ import MaintenanceOverview from "./components/maintenance-overview";
 import { MaintenanceSkeleton } from "./components/maintenance-skeleton";
 import { getMaintenances } from "@/app/actions/maintenance";
 import { getServices } from "@/app/actions";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function MaintenancePage() {
+  const { orgId } = await auth();
+  if (!orgId) {
+    throw new Error("No organization selected");
+  }
   const [{ maintenances }, { services }] = await Promise.all([
-    getMaintenances(),
-    getServices(),
+    getMaintenances(orgId),
+    getServices(orgId),
   ]);
 
   return (

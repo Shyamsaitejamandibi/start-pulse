@@ -14,6 +14,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           String        @id @default(cuid())
+  orgId        String?
+  clerkId      String        @unique
+  email        String
+  firstName    String?
+  lastName     String?
+  organization Organization? @relation(fields: [orgId], references: [id])
+}
+
 enum ServiceStatus {
   operational
   degraded
@@ -42,6 +52,19 @@ enum MaintenanceStatus {
   completed
 }
 
+model Organization {
+  id           String         @id @default(cuid())
+  name         String
+  slug         String         @unique
+  users        User[]
+  services     Service[]
+  incidents    Incident[]
+  maintenances Maintenance[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  ServiceGroup ServiceGroup[]
+}
+
 model Service {
   id           String        @id @default(cuid())
   name         String
@@ -52,13 +75,17 @@ model Service {
   group        ServiceGroup? @relation(fields: [groupId], references: [id])
   incidents    Incident[]
   maintenances Maintenance[]
+  orgId        String
+  organization Organization  @relation(fields: [orgId], references: [id])
 }
 
 model ServiceGroup {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  services    Service[]
+  id           String       @id @default(cuid())
+  name         String
+  description  String?
+  services     Service[]
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id])
 }
 
 model Incident {
@@ -72,6 +99,8 @@ model Incident {
   resolvedAt       DateTime?
   affectedServices Service[]
   updates          IncidentUpdate[]
+  orgId            String
+  organization     Organization     @relation(fields: [orgId], references: [id])
 }
 
 model IncidentUpdate {
@@ -94,6 +123,8 @@ model Maintenance {
   createdAt        DateTime            @default(now())
   affectedServices Service[]
   updates          MaintenanceUpdate[]
+  orgId            String
+  organization     Organization        @relation(fields: [orgId], references: [id])
 }
 
 model MaintenanceUpdate {

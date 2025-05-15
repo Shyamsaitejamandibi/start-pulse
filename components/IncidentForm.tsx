@@ -6,6 +6,7 @@ import { addIncident, updateIncident } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 interface IncidentFormProps {
   editMode?: boolean;
@@ -37,6 +38,7 @@ const IncidentForm: React.FC<IncidentFormProps> = ({
   services,
 }) => {
   const router = useRouter();
+  const { orgId } = useAuth();
   const [isLoading, setIsLoading] = React.useState(false);
   const [title, setTitle] = React.useState(initialData?.title || "");
   const [description, setDescription] = React.useState(
@@ -71,7 +73,10 @@ const IncidentForm: React.FC<IncidentFormProps> = ({
         }
         toast(`Incident updated successfully`);
       } else {
-        const result = await addIncident({
+        if (!orgId) {
+          throw new Error("No organization selected");
+        }
+        const result = await addIncident(orgId, {
           title,
           description,
           impact,

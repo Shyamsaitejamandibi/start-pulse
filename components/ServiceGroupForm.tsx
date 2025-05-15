@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { addServiceGroup, updateServiceGroup } from "@/app/actions";
+import { createServiceGroup, updateServiceGroup } from "@/app/actions";
 
 interface ServiceGroupFormProps {
   editMode?: boolean;
@@ -36,7 +36,7 @@ const ServiceGroupForm: React.FC<ServiceGroupFormProps> = ({
         });
         toast.success("Service group updated successfully");
       } else {
-        await addServiceGroup({
+        await createServiceGroup({
           name,
           description,
         });

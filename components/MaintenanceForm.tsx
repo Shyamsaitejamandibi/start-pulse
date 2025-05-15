@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { addMaintenance, updateMaintenance } from "@/app/actions/maintenance";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
+import { Loader2 } from "lucide-react";
 
 interface MaintenanceFormProps {
   editMode?: boolean;
@@ -28,6 +30,7 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
   services,
 }) => {
   const router = useRouter();
+  const { orgId } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [title, setTitle] = React.useState(initialData?.title || "");
   const [description, setDescription] = React.useState(
@@ -55,6 +58,11 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
     setIsSubmitting(true);
 
     try {
+      if (!orgId) {
+        toast.error("No organization selected");
+        return;
+      }
+
       const maintenanceData = {
         title,
         description,
@@ -64,14 +72,18 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
       };
 
       if (editMode && initialData) {
-        const result = await updateMaintenance(initialData.id, maintenanceData);
+        const result = await updateMaintenance(
+          orgId,
+          initialData.id,
+          maintenanceData
+        );
         if (result.error) {
           toast.error(result.error);
           return;
         }
         toast.success("Maintenance updated successfully");
       } else {
-        const result = await addMaintenance(maintenanceData);
+        const result = await addMaintenance(orgId, maintenanceData);
         if (result.error) {
           toast.error(result.error);
           return;
@@ -113,7 +125,7 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Maintenance title"
           disabled={isSubmitting}
         />
@@ -127,7 +139,7 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
           required
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Describe the maintenance"
           rows={3}
           disabled={isSubmitting}
@@ -161,7 +173,7 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
           type="datetime-local"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           disabled={isSubmitting}
         />
       </div>
@@ -175,7 +187,7 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
           type="datetime-local"
           value={endTime}
           onChange={(e) => setEndTime(e.target.value)}
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           disabled={isSubmitting}
         />
       </div>
@@ -188,7 +200,7 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
           multiple
           value={affectedServices}
           onChange={handleServiceChange}
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           disabled={isSubmitting}
         >
           {services.map((service) => (
@@ -197,9 +209,12 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
             </option>
           ))}
         </select>
+        <p className="mt-1 text-sm text-gray-500">
+          Hold Ctrl (Windows) or Command (Mac) to select multiple services
+        </p>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-2">
+      <div className="flex justify-end space-x-2">
         <Button
           type="button"
           variant="outline"
@@ -209,11 +224,8 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? "Saving..."
-            : editMode
-            ? "Update Maintenance"
-            : "Add Maintenance"}
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {editMode ? "Update Maintenance" : "Schedule Maintenance"}
         </Button>
       </div>
     </form>

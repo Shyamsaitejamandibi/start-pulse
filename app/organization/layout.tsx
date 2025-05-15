@@ -2,9 +2,13 @@ import { OrganizationList } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { PropsWithChildren } from "react";
 import AdminHeader from "./components/admin-header";
-
+import { redirect } from "next/navigation";
 export const RequireActiveOrganization = async (props: PropsWithChildren) => {
   const { orgId } = await auth();
+
+  if (!orgId) {
+    redirect("/create-organization");
+  }
 
   if (orgId) {
     return (

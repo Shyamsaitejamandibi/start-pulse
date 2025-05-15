@@ -2,11 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { MaintenanceStatus } from "@/lib/generated/prisma";
-import { prisma } from "@/lib/db";
+import { PrismaClient } from "@/lib/generated/prisma";
+import { validateOrganizationAccess } from "@/lib/auth";
 
-export async function getMaintenances() {
+const prisma = new PrismaClient();
+
+export async function getMaintenances(orgId: string) {
   try {
+    await validateOrganizationAccess(orgId);
     const maintenances = await prisma.maintenance.findMany({
+      where: {
+        orgId,
+      },
       include: {
         updates: {
           orderBy: {
@@ -27,14 +34,31 @@ export async function getMaintenances() {
   }
 }
 
-export async function addMaintenance(data: {
-  title: string;
-  description: string;
-  startTime: Date;
-  endTime: Date;
-  affectedServices: string[];
-}) {
+export async function addMaintenance(
+  orgId: string,
+  data: {
+    title: string;
+    description: string;
+    startTime: Date;
+    endTime: Date;
+    affectedServices: string[];
+  }
+) {
   try {
+    await validateOrganizationAccess(orgId);
+
+    // Verify all affected services belong to the organization
+    const services = await prisma.service.findMany({
+      where: {
+        id: { in: data.affectedServices },
+        orgId,
+      },
+    });
+
+    if (services.length !== data.affectedServices.length) {
+      throw new Error("One or more services not found or access denied");
+    }
+
     const maintenance = await prisma.maintenance.create({
       data: {
         title: data.title,
@@ -42,6 +66,7 @@ export async function addMaintenance(data: {
         startTime: data.startTime,
         endTime: data.endTime,
         status: MaintenanceStatus.scheduled,
+        orgId,
         affectedServices: {
           connect: data.affectedServices.map((id) => ({ id })),
         },
@@ -67,6 +92,7 @@ export async function addMaintenance(data: {
 }
 
 export async function updateMaintenance(
+  orgId: string,
   id: string,
   data: {
     title: string;
@@ -77,6 +103,20 @@ export async function updateMaintenance(
   }
 ) {
   try {
+    await validateOrganizationAccess(orgId);
+
+    // Verify the maintenance belongs to the organization
+    const maintenance = await prisma.maintenance.findFirst({
+      where: {
+        id,
+        orgId,
+      },
+    });
+
+    if (!maintenance) {
+      throw new Error("Maintenance not found or access denied");
+    }
+
     // First, disconnect all existing affected services
     await prisma.maintenance.update({
       where: { id },
@@ -88,7 +128,7 @@ export async function updateMaintenance(
     });
 
     // Then update with new data
-    const maintenance = await prisma.maintenance.update({
+    const updatedMaintenance = await prisma.maintenance.update({
       where: { id },
       data: {
         title: data.title,
@@ -105,15 +145,29 @@ export async function updateMaintenance(
       },
     });
     revalidatePath("/organization/maintenance");
-    return { maintenance };
+    return { maintenance: updatedMaintenance };
   } catch (error) {
     console.error("Error updating maintenance:", error);
     return { error: "Failed to update maintenance" };
   }
 }
 
-export async function deleteMaintenance(id: string) {
+export async function deleteMaintenance(orgId: string, id: string) {
   try {
+    await validateOrganizationAccess(orgId);
+
+    // Verify the maintenance belongs to the organization
+    const maintenance = await prisma.maintenance.findFirst({
+      where: {
+        id,
+        orgId,
+      },
+    });
+
+    if (!maintenance) {
+      throw new Error("Maintenance not found or access denied");
+    }
+
     // First delete all updates
     await prisma.maintenanceUpdate.deleteMany({
       where: { maintenanceId: id },
@@ -132,11 +186,26 @@ export async function deleteMaintenance(id: string) {
 }
 
 export async function addMaintenanceUpdate(
+  orgId: string,
   maintenanceId: string,
   message: string,
   status: MaintenanceStatus
 ) {
   try {
+    await validateOrganizationAccess(orgId);
+
+    // Verify the maintenance belongs to the organization
+    const maintenance = await prisma.maintenance.findFirst({
+      where: {
+        id: maintenanceId,
+        orgId,
+      },
+    });
+
+    if (!maintenance) {
+      throw new Error("Maintenance not found or access denied");
+    }
+
     // Create the update
     const update = await prisma.maintenanceUpdate.create({
       data: {

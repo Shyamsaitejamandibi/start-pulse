@@ -21,6 +21,7 @@ import {
 import { deleteMaintenance } from "@/app/actions/maintenance";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
 
 type MaintenanceWithRelations = Maintenance & {
   affectedServices: Service[];
@@ -43,21 +44,27 @@ export default function MaintenanceOverview({
   services,
 }: MaintenanceOverviewProps) {
   const router = useRouter();
+  const { orgId } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] =
     useState<MaintenanceWithRelations | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteMaintenance = async (maintenanceId: string) => {
+    if (!orgId) {
+      toast.error("No organization selected");
+      return;
+    }
+
     if (!confirm("Are you sure you want to delete this maintenance?")) {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsDeleting(true);
     try {
-      const result = await deleteMaintenance(maintenanceId);
+      const result = await deleteMaintenance(orgId, maintenanceId);
       if (result.error) {
         toast.error(result.error);
         return;
@@ -68,7 +75,7 @@ export default function MaintenanceOverview({
       console.error("Error deleting maintenance:", error);
       toast.error("An unexpected error occurred");
     } finally {
-      setIsSubmitting(false);
+      setIsDeleting(false);
     }
   };
 
@@ -92,17 +99,17 @@ export default function MaintenanceOverview({
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">
-          Maintenance Windows
+          Maintenance Management
         </h2>
-        <Button onClick={() => setShowAddForm(true)} disabled={isSubmitting}>
+        <Button onClick={() => setShowAddForm(true)}>
           Schedule Maintenance
         </Button>
       </div>
 
       <Tabs defaultValue="active">
         <TabsList>
-          <TabsTrigger value="active">Active & Upcoming</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="active">Active Maintenance</TabsTrigger>
+          <TabsTrigger value="completed">Completed Maintenance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="pt-6">
@@ -111,47 +118,41 @@ export default function MaintenanceOverview({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Title
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Schedule
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Affected Services
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {activeMaintenances.map((maintenance) => (
                     <tr key={maintenance.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {maintenance.title}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {maintenance.title}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {maintenance.description}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-block px-2 py-1 text-xs rounded-full ${getMaintenanceStatusColor(
-                            maintenance.status as MaintenanceStatus
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMaintenanceStatusColor(
+                            maintenance.status
                           )}`}
                         >
-                          {maintenance.status === "scheduled"
-                            ? "Scheduled"
-                            : "In Progress"}
+                          {maintenance.status.replace("_", " ")}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -159,6 +160,11 @@ export default function MaintenanceOverview({
                           maintenance.startTime.toISOString(),
                           maintenance.endTime.toISOString()
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {maintenance.affectedServices
+                          .map((service) => service.name)
+                          .join(", ")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <Button
@@ -188,6 +194,7 @@ export default function MaintenanceOverview({
                           onClick={() =>
                             handleDeleteMaintenance(maintenance.id)
                           }
+                          disabled={isDeleting}
                         >
                           Delete
                         </Button>
@@ -215,37 +222,30 @@ export default function MaintenanceOverview({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Title
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Schedule
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Created
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Affected Services
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Actions
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Last Update
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {completedMaintenances.map((maintenance) => (
                     <tr key={maintenance.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {maintenance.title}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {maintenance.title}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {maintenance.description}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDateRange(
@@ -254,19 +254,16 @@ export default function MaintenanceOverview({
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatTimeAgo(maintenance.createdAt.toISOString())}
+                        {maintenance.affectedServices
+                          .map((service) => service.name)
+                          .join(", ")}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-800"
-                          onClick={() =>
-                            handleDeleteMaintenance(maintenance.id)
-                          }
-                        >
-                          Delete
-                        </Button>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {maintenance.updates.length > 0
+                          ? formatTimeAgo(
+                              maintenance.updates[0].createdAt.toISOString()
+                            )
+                          : "No updates"}
                       </td>
                     </tr>
                   ))}
@@ -275,9 +272,7 @@ export default function MaintenanceOverview({
             </div>
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">
-                No completed maintenance windows yet.
-              </p>
+              <p className="text-gray-500">No completed maintenance windows.</p>
             </div>
           )}
         </TabsContent>
