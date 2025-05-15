@@ -6,7 +6,7 @@ import type {
   Incident,
   Maintenance,
   ServiceGroup,
-} from "@prisma/client";
+} from "@/lib/generated/prisma";
 import {
   ServiceStatus,
   IncidentStatus,
