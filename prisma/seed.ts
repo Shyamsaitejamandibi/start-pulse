@@ -9,11 +9,22 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
+  // Create organization first
+  const organization = await prisma.organization.create({
+    data: {
+      name: "Status Pulse",
+      slug: "status-pulse",
+    },
+  });
+
   // Create service groups
   const infrastructureGroup = await prisma.serviceGroup.create({
     data: {
       name: "Infrastructure",
       description: "Core infrastructure services",
+      organization: {
+        connect: { id: organization.id },
+      },
     },
   });
 
@@ -21,6 +32,9 @@ async function main() {
     data: {
       name: "Applications",
       description: "Business applications and services",
+      organization: {
+        connect: { id: organization.id },
+      },
     },
   });
 
@@ -31,7 +45,12 @@ async function main() {
         name: "Database Cluster",
         description: "Main database cluster",
         status: ServiceStatus.operational,
-        groupId: infrastructureGroup.id,
+        group: {
+          connect: { id: infrastructureGroup.id },
+        },
+        organization: {
+          connect: { id: organization.id },
+        },
       },
     }),
     prisma.service.create({
@@ -39,7 +58,12 @@ async function main() {
         name: "API Gateway",
         description: "API Gateway service",
         status: ServiceStatus.operational,
-        groupId: infrastructureGroup.id,
+        group: {
+          connect: { id: infrastructureGroup.id },
+        },
+        organization: {
+          connect: { id: organization.id },
+        },
       },
     }),
     prisma.service.create({
@@ -47,7 +71,12 @@ async function main() {
         name: "Authentication Service",
         description: "User authentication and authorization",
         status: ServiceStatus.operational,
-        groupId: applicationGroup.id,
+        group: {
+          connect: { id: applicationGroup.id },
+        },
+        organization: {
+          connect: { id: organization.id },
+        },
       },
     }),
     prisma.service.create({
@@ -55,7 +84,12 @@ async function main() {
         name: "File Storage",
         description: "File storage and management service",
         status: ServiceStatus.degraded,
-        groupId: applicationGroup.id,
+        group: {
+          connect: { id: applicationGroup.id },
+        },
+        organization: {
+          connect: { id: organization.id },
+        },
       },
     }),
   ]);
@@ -67,6 +101,9 @@ async function main() {
       description: "Experiencing slow query response times",
       status: IncidentStatus.investigating,
       impact: IncidentImpact.major,
+      organization: {
+        connect: { id: organization.id },
+      },
       affectedServices: {
         connect: [{ id: services[0].id }],
       },
@@ -88,6 +125,9 @@ async function main() {
       status: MaintenanceStatus.scheduled,
       startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
       endTime: new Date(Date.now() + 26 * 60 * 60 * 1000), // 26 hours from now
+      organization: {
+        connect: { id: organization.id },
+      },
       affectedServices: {
         connect: [{ id: services[0].id }],
       },

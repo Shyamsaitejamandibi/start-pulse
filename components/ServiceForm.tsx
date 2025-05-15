@@ -5,6 +5,7 @@ import { addService, updateServiceStatus } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 interface ServiceFormProps {
   editMode?: boolean;
@@ -28,6 +29,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   serviceGroups,
 }) => {
   const router = useRouter();
+  const { orgId } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [name, setName] = React.useState(initialData?.name || "");
   const [description, setDescription] = React.useState(
@@ -40,13 +42,17 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
     (initialData?.groupId as string) || null
   );
 
+  if (!orgId) {
+    toast.error("No organization selected");
+    return null;
+  }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
       if (editMode && initialData) {
-        await updateServiceStatus(initialData.id, status);
+        await updateServiceStatus(orgId, initialData.id, status);
         toast.success("Service status updated successfully");
       } else {
         await addService({
