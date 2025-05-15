@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generated files
+/lib/generated
+
 # production
 /build
 
