@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import type { Maintenance } from "@prisma/client";
-import { MaintenanceStatus } from "@/lib/generated/prisma";
+import { MaintenanceStatus, Maintenance } from "@/lib/generated/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";

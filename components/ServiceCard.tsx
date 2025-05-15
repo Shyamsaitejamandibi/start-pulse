@@ -1,5 +1,4 @@
-import type { Service, ServiceGroup } from "@prisma/client";
-import { ServiceStatus } from "@/lib/generated/prisma";
+import { ServiceStatus, Service, ServiceGroup } from "@/lib/generated/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, AlertTriangle, Clock, AlertOctagon } from "lucide-react";
 import { cn } from "@/lib/utils";

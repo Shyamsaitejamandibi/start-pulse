@@ -1,5 +1,4 @@
-import { Incident } from "@prisma/client";
-import { IncidentStatus } from "@/lib/generated/prisma";
+import { IncidentStatus, Incident } from "@/lib/generated/prisma";
 import { cn } from "@/lib/utils";
 
 interface IncidentListProps {

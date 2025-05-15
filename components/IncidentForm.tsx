@@ -1,5 +1,5 @@
 import React from "react";
-import { Incident, Service } from "@prisma/client";
+import { Incident, Service } from "@/lib/generated/prisma";
 import { IncidentStatus, IncidentImpact } from "@/lib/generated/prisma";
 import { Button } from "@/components/ui/button";
 import { addIncident, updateIncident } from "@/app/actions";

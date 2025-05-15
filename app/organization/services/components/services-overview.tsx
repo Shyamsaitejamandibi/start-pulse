@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServiceForm from "@/components/ServiceForm";
 import ServiceGroupForm from "@/components/ServiceGroupForm";
 import { formatTimeAgo } from "@/utils/dateUtils";
-import { Service, ServiceGroup } from "@prisma/client";
+import { Service, ServiceGroup } from "@/lib/generated/prisma";
 import { ServiceStatus } from "@/lib/generated/prisma";
 import { deleteService, deleteServiceGroup } from "@/app/actions";
 import { toast } from "sonner";

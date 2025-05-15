@@ -1,5 +1,5 @@
 import React from "react";
-import { ServiceGroup } from "@prisma/client";
+import { ServiceGroup } from "@/lib/generated/prisma";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

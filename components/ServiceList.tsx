@@ -1,6 +1,5 @@
-import { Service } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { ServiceStatus } from "@/lib/generated/prisma";
+import { ServiceStatus, Service } from "@/lib/generated/prisma";
 
 interface ServiceListProps {
   services: Service[];
