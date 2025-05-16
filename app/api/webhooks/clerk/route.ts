@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   const eventType = evt.type;
 
   try {
-    if (eventType === "organizationInvitation.accepted") {
+    if (eventType === "organizationInvitation.created") {
       const { id, organization_id, email_address } = evt.data;
 
       // Check if user already exists
