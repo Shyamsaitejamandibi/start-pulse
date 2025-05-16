@@ -45,6 +45,37 @@ export async function POST(req: Request) {
   const eventType = evt.type;
 
   try {
+    if (eventType === "organizationInvitation.accepted") {
+      const { id, organization_id, email_address } = evt.data;
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          clerkId: id,
+        },
+      });
+
+      if (existingUser) {
+        // Update existing user's organization
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            orgId: organization_id,
+          },
+        });
+      } else {
+        // Create new user with actual data from the invitation
+        await prisma.user.create({
+          data: {
+            clerkId: id,
+            email: email_address,
+            firstName: "", // These will be updated when the user completes their profile
+            lastName: "",
+            orgId: organization_id,
+          },
+        });
+      }
+    }
     if (eventType === "organization.created") {
       const { id, name, slug } = evt.data;
 
