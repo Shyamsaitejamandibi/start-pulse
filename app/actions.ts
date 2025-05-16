@@ -12,6 +12,7 @@ import { currentUser, auth } from "@clerk/nextjs/server";
 import { validateOrganizationAccess } from "@/lib/auth";
 
 export async function getUser() {
+  const { orgId } = await auth();
   const user = await currentUser();
   if (!user) {
     return { error: "User not found" };
@@ -28,6 +29,7 @@ export async function getUser() {
         email: user.emailAddresses[0].emailAddress,
         firstName: user.firstName,
         lastName: user.lastName,
+        orgId: orgId,
       },
     });
   }
