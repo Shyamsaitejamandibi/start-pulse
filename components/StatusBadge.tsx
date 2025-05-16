@@ -1,4 +1,4 @@
-import { ServiceStatus } from "@/lib/generated/prisma";
+import { ServiceStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {

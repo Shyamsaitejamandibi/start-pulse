@@ -13,11 +13,7 @@ import MaintenanceForm from "@/components/MaintenanceForm";
 import MaintenanceUpdateForm from "@/components/MaintenanceUpdateForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMaintenanceStatusColor } from "@/utils/statusUtils";
-import {
-  Maintenance,
-  Service,
-  MaintenanceStatus,
-} from "@/lib/generated/prisma";
+import { Maintenance, Service, MaintenanceStatus } from "@prisma/client";
 import { deleteMaintenance } from "@/app/actions/maintenance";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

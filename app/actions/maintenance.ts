@@ -1,11 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { MaintenanceStatus } from "@/lib/generated/prisma";
-import { PrismaClient } from "@/lib/generated/prisma";
+import { MaintenanceStatus } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { validateOrganizationAccess } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function getMaintenances(orgId: string) {
   try {

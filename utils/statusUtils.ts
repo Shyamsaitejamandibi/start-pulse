@@ -3,7 +3,7 @@ import {
   IncidentStatus,
   IncidentImpact,
   MaintenanceStatus,
-} from "@/lib/generated/prisma";
+} from "@prisma/client";
 
 export const getStatusColor = (status: ServiceStatus): string => {
   switch (status) {

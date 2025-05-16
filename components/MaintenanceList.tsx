@@ -1,4 +1,4 @@
-import { MaintenanceStatus, Maintenance } from "@/lib/generated/prisma";
+import { MaintenanceStatus, Maintenance } from "@prisma/client";
 
 interface MaintenanceListProps {
   maintenances: (Maintenance & {

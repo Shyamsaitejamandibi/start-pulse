@@ -1,12 +1,10 @@
 import {
-  PrismaClient,
   ServiceStatus,
   IncidentStatus,
   IncidentImpact,
   MaintenanceStatus,
-} from "../lib/generated/prisma";
-
-const prisma = new PrismaClient();
+} from "@prisma/client";
+import { prisma } from "@/lib/db";
 
 async function main() {
   // Create organization first

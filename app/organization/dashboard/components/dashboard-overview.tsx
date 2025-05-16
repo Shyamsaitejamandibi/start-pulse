@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Service, Incident, Maintenance } from "@/lib/generated/prisma";
+import { Service, Incident, Maintenance } from "@prisma/client";
 
 export function DashboardOverview({
   services,

@@ -4,7 +4,7 @@ import {
   getIncidentStatusColor,
   getMaintenanceStatusColor,
 } from "@/utils/statusUtils";
-import { IncidentStatus, MaintenanceStatus } from "@/lib/generated/prisma";
+import { IncidentStatus, MaintenanceStatus } from "@prisma/client";
 
 interface TimelineItemProps {
   title: string;

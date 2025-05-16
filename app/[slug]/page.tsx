@@ -9,7 +9,7 @@ import {
   ServiceStatus,
   IncidentStatus,
   MaintenanceStatus,
-} from "@/lib/generated/prisma";
+} from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function Page() {

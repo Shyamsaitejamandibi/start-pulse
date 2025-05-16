@@ -1,5 +1,5 @@
 import React from "react";
-import { IncidentStatus, Incident } from "@/lib/generated/prisma";
+import { IncidentStatus, Incident } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { addIncidentUpdate } from "@/app/actions";
 import { useRouter } from "next/navigation";

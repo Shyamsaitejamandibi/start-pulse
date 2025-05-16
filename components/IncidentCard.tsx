@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import type { Incident } from "@/lib/generated/prisma";
-import { IncidentStatus, IncidentImpact } from "@/lib/generated/prisma";
+import type { Incident } from "@prisma/client";
+import { IncidentStatus, IncidentImpact } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";

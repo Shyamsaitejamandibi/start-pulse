@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ServiceStatus } from "@/lib/generated/prisma";
+import { ServiceStatus } from "@prisma/client";
 interface StatusHeaderProps {
   status: ServiceStatus;
 }

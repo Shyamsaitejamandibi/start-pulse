@@ -6,13 +6,13 @@ import type {
   Incident,
   Maintenance,
   ServiceGroup,
-} from "@/lib/generated/prisma";
+} from "@prisma/client";
 import {
   ServiceStatus,
   IncidentStatus,
   type IncidentImpact,
   MaintenanceStatus,
-} from "@/lib/generated/prisma";
+} from "@prisma/client";
 import {
   Bell,
   Clock,

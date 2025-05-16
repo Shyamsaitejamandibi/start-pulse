@@ -6,12 +6,10 @@ import {
   IncidentStatus,
   IncidentImpact,
   MaintenanceStatus,
-  PrismaClient,
-} from "@/lib/generated/prisma";
+} from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { currentUser, auth } from "@clerk/nextjs/server";
 import { validateOrganizationAccess } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function getUser() {
   const user = await currentUser();

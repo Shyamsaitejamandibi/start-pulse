@@ -16,10 +16,10 @@ import {
   getIncidentImpactColor,
   getIncidentStatusColor,
 } from "@/utils/statusUtils";
-import { Incident } from "@/lib/generated/prisma";
+import { Incident } from "@prisma/client";
 import { resolveIncident, deleteIncident } from "@/app/actions";
 import { useRouter } from "next/navigation";
-import { Service } from "@/lib/generated/prisma";
+import { Service } from "@prisma/client";
 
 interface IncidentWithRelations extends Incident {
   affectedServices: { id: string }[];

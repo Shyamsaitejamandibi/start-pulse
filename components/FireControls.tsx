@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { ServiceStatus } from "@/lib/generated/prisma";
+import { ServiceStatus } from "@prisma/client";
 import {
   CheckCircle,
   AlertTriangle,

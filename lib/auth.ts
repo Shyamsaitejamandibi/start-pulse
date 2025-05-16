@@ -1,10 +1,9 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { PrismaClient } from "@/lib/generated/prisma";
 import { redirect } from "next/navigation";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export async function checkOrganizationAccess() {
   const { orgId, userId } = await auth();

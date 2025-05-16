@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  MaintenanceStatus,
-  Maintenance,
-  Service,
-} from "@/lib/generated/prisma";
+import { MaintenanceStatus, Maintenance, Service } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { addMaintenance, updateMaintenance } from "@/app/actions/maintenance";
 import { useRouter } from "next/navigation";
